@@ -1,1 +1,1 @@
-pip install selenium webdriver-manager pillow pytesseract pillow <install juga tesseract-ocr-w64-setup-5.5.0.20241111.exe.exe nya (windows)>
+pip install selenium webdriver-manager pillow pytesseract deep-translator <install juga tesseract-ocr-w64-setup-5.5.0.20241111.exe.exe nya (windows)>
