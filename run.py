@@ -47,7 +47,7 @@ def translate_text(text, dest_lang="id", max_chunk=4000):
 
 
 try:
-    series_url = "https://requiemtls.com/series/how-to-survive-as-a-painter-in-a-dark-fantasy/" #ganti link nya
+    series_url = "https://requiemtls.com/series/*novel*/" #ganti link nya
     driver.get(series_url)
     wait = WebDriverWait(driver, 15)
 
