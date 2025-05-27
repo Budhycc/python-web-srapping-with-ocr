@@ -60,4 +60,4 @@ Pastikan Anda telah menginstal dependensi berikut sebelum menjalankan proyek ini
 
 3. **Hasil ekstraksi akan disimpan dalam file teks di direktori output.**
  
-4. **Hasil ekstraksi txt akan di terjemahkan otomatis
+4. **Hasil ekstraksi txt akan di terjemahkan otomatis.**
