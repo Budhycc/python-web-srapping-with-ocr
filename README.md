@@ -2,7 +2,7 @@
 
 # Python Web Scraping with OCR
 
-Proyek ini bertujuan untuk melakukan web scraping pada novel daring yang kontennya di enkripsi dalam format gambar. Dengan memanfaatkan teknik Optical Character Recognition (OCR), proyek ini mengonversi teks dalam gambar menjadi teks digital yang dapat diproses lebih lanjut.
+Proyek ini bertujuan untuk melakukan web scraping pada novel daring yang kontennya di enkripsi dalam format gambar. Dengan memanfaatkan teknik Optical Character Recognition (OCR), proyek ini mengonversi teks dalam gambar menjadi teks digital yang dapat diproses lebih lanjut
 
 ## Fitur
 
