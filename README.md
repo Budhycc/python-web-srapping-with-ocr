@@ -22,7 +22,7 @@ Pastikan Anda telah menginstal dependensi berikut sebelum menjalankan proyek ini
   * `requests`
   * `BeautifulSoup4`
   * `Deep-translator`
-  * `Pillow`([GitHub][2], [GitHub][3], [GitHub][4], [GitHub][5], [Reddit][6])
+  * `Pillow`
 
 ## Instalasi
 
