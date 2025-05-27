@@ -47,7 +47,7 @@ def translate_text(text, dest_lang="id", max_chunk=4000):
 
 
 try:
-    series_url = "https://requiemtls.com/series/*novel*/" #ganti link nya
+    series_url = "https://requiemtls.com/series/the-step-mother-raised-snow-white/" #ganti link nya
     driver.get(series_url)
     wait = WebDriverWait(driver, 15)
 
@@ -58,7 +58,8 @@ try:
     except:
         series_title = "Unknown_Series"
 
-    base_folder = os.path.join("downloads", series_title)
+    base_folder = os.path.join("download", series_title)
+    base_folder_translated = os.path.join("translated", series_title)
     os.makedirs(base_folder, exist_ok=True)
 
     # Accept cookies jika muncul
@@ -127,7 +128,7 @@ try:
             translated_text = translate_text(text, dest_lang="id")
 
             if translated_text:
-                translated_path = os.path.join(base_folder, f"{episode_title}.translated.txt")
+                translated_path = os.path.join(base_folder_translated, f"{episode_title}.translated.txt")
                 with open(translated_path, 'w', encoding='utf-8') as f:
                     f.write(translated_text)
                 print(f"✅ Terjemahan disimpan: {translated_path}")
