@@ -51,7 +51,7 @@ Pastikan Anda telah menginstal dependensi berikut sebelum menjalankan proyek ini
 1. **Jalankan skrip utama:**
 
    ```bash
-   python main.py
+   requiemtls.py
    ```
 
 
