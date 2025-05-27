@@ -1,5 +1,3 @@
----
-
 # Python Web Scraping with OCR
 
 Proyek ini bertujuan untuk melakukan web scraping pada novel daring yang kontennya di enkripsi dalam format gambar. Dengan memanfaatkan teknik Optical Character Recognition (OCR), proyek ini mengonversi teks dalam gambar menjadi teks digital yang dapat diproses lebih lanjut
@@ -26,7 +24,7 @@ Pastikan Anda telah menginstal dependensi berikut sebelum menjalankan proyek ini
 
 ## Instalasi
 
-1. **Clone repositori:**([Wikipedia][7])
+1. **Clone repositori:**
 
    ```bash
    git clone https://github.com/Budhycc/python-web-srapping-with-ocr.git
@@ -43,7 +41,7 @@ Pastikan Anda telah menginstal dependensi berikut sebelum menjalankan proyek ini
 
 
 
-3. **Instal Tesseract OCR:**([Wikipedia][7])
+3. **Instal Tesseract OCR:**
 
    * **Windows:** Unduh dan instal dari [sini](https://github.com/tesseract-ocr/tesseract/wiki)
 
@@ -61,11 +59,5 @@ Pastikan Anda telah menginstal dependensi berikut sebelum menjalankan proyek ini
 2. **Ikuti petunjuk yang diberikan untuk memasukkan URL halaman web novel yang ingin Anda scrape.**
 
 3. **Hasil ekstraksi akan disimpan dalam file teks di direktori output.**
-
-## Catatan
-
-* Pastikan koneksi internet Anda stabil selama proses scraping.
-* Kualitas hasil OCR sangat bergantung pada kualitas gambar sumber. Gambar dengan resolusi rendah atau teks yang buram dapat menghasilkan ekstraksi yang kurang akurat.
-* Jika Anda mengalami kesulitan atau menemukan bug, silakan buka issue di repositori ini.
-
----
+ 
+4. **Hasil ekstraksi txt akan di terjemahkan otomatis
