@@ -47,10 +47,7 @@ def scrape_chapter(chapter_url):
     soup = BeautifulSoup(res.text, 'html.parser')
 
     title_tag = soup.select_one('h1.entry-title') or soup.select_one('h2.entry-title') or soup.select_one('h2') or soup.select_one('title')
-    if title_tag:
-        chapter_title = title_tag.text.strip()
-    else:
-        chapter_title = chapter_url.rstrip('/').split('/')[-1].replace('-', ' ').title()
+    chapter_title = title_tag.text.strip() if title_tag else chapter_url.rstrip('/').split('/')[-1].replace('-', ' ').title()
 
     content_div = soup.select_one('div.content')
     if not content_div:
@@ -96,11 +93,25 @@ def main():
     for i, title in enumerate(chapter_titles, 1):
         print(f"{i}. {title}")
 
-    choice = input("\nKetik 'all' untuk download semua, atau masukkan nomor chapter (misal: 1,3,5): ").strip().lower()
+    choice = input("\nKetik 'all' untuk download semua, atau masukkan nomor chapter (misal: 1,3,5 | 4+ | 3-6): ").strip().lower()
+
     if choice == 'all':
         selected_indices = list(range(len(chapter_links)))
+    elif '+' in choice:
+        try:
+            start_index = int(choice.replace('+', '').strip()) - 1
+            selected_indices = list(range(start_index, len(chapter_links)))
+        except:
+            print("⚠️ Input tidak valid. Keluar.")
+            return
+    elif '-' in choice:
+        try:
+            start, end = [int(i.strip()) for i in choice.split('-')]
+            selected_indices = list(range(start - 1, end))
+        except:
+            print("⚠️ Input tidak valid. Keluar.")
+            return
     else:
-        selected_indices = []
         try:
             selected_numbers = [int(i.strip()) for i in choice.split(',') if i.strip().isdigit()]
             selected_indices = [i - 1 for i in selected_numbers if 0 < i <= len(chapter_links)]
@@ -108,7 +119,9 @@ def main():
             print("⚠️ Input tidak valid. Keluar.")
             return
 
-    base_path = os.path.join("download", sanitize_filename(series_title))
+    # ✅ Perbaikan path: simpan ke folder lokal dalam proyek
+    # base_path = os.path.join(os.getcwd(), "download", sanitize_filename(series_title))
+    base_path = os.path.join("..", "download", sanitize_filename(series_title))
     original_dir = os.path.join(base_path, "original")
     translated_dir = os.path.join(base_path, "translated")
     log_path = os.path.join(base_path, "failed.log")
@@ -137,7 +150,9 @@ def main():
             print(f"❌ Gagal memproses {chapter_link}: {e}")
             log_failure(log_path, f"{chapter_name} | {chapter_link} | Error: {str(e)}")
 
-    print(f"\n✅ Semua proses selesai. Log error tersimpan di: {log_path}")
+    print(f"\n✅ Semua proses selesai.")
+    print(f"📁 File hasil tersimpan di: {base_path}")
+    print(f"📜 Log error (jika ada) tersimpan di: {log_path}")
 
 if __name__ == "__main__":
     main()
