@@ -4,7 +4,7 @@ from bs4 import BeautifulSoup
 from deep_translator import GoogleTranslator
 import time
 
-BASE_URL = "https://darkmtl.com/series/childhood-friend-of-the-zenith/"
+BASE_URL = input("Masukan Link Series nya (contoh: https://darkmtl.com/series/{title}) : ")
 
 def sanitize_filename(name):
     return "".join(c if c.isalnum() or c in " ._-" else "_" for c in name)
@@ -19,6 +19,7 @@ def get_series_info_and_chapters(series_url):
     series_title = series_title_tag.text.strip()
 
     chapter_links = []
+    chapter_titles = []
     chapter_div = soup.select_one('div.series-chapter')
     if not chapter_div:
         raise Exception("Tidak menemukan div.series-chapter")
@@ -29,15 +30,17 @@ def get_series_info_and_chapters(series_url):
             a_tags = info_div.select('a')
             if len(a_tags) >= 2:
                 href = a_tags[1].get('href')
+                title = a_tags[1].text.strip()
                 if href:
-                    if href.startswith('http'):
-                        chapter_links.append(href)
-                    else:
-                        chapter_links.append("https://darkmtl.com" + href)
+                    if not href.startswith('http'):
+                        href = "https://darkmtl.com" + href
+                    chapter_links.append(href)
+                    chapter_titles.append(title)
 
-    chapter_links.reverse()  # urut dari awal ke akhir
+    chapter_links.reverse()
+    chapter_titles.reverse()
 
-    return series_title, chapter_links
+    return series_title, chapter_links, chapter_titles
 
 def scrape_chapter(chapter_url):
     res = requests.get(chapter_url)
@@ -70,12 +73,9 @@ def translate_long_text(text, target_lang='id', batch_size=4500):
 
     while start < length:
         end = start + batch_size
-        if end < length:
-            # Usahakan potong di spasi terakhir supaya tidak memotong kata
-            end = text.rfind(' ', start, end)
-            if end == -1 or end <= start:
-                end = start + batch_size
-
+        end = text.rfind(' ', start, end)
+        if end == -1 or end <= start:
+            end = start + batch_size
         chunk = text[start:end].strip()
         if chunk:
             translated_chunk = translator.translate(chunk)
@@ -85,9 +85,24 @@ def translate_long_text(text, target_lang='id', batch_size=4500):
     return "\n".join(translated_parts)
 
 def main():
-    series_title, chapters = get_series_info_and_chapters(BASE_URL)
-    print(f"Judul series: {series_title}")
-    print(f"Jumlah chapter: {len(chapters)}")
+    series_title, chapter_links, chapter_titles = get_series_info_and_chapters(BASE_URL)
+    print(f"\n📘 Judul Series: {series_title}")
+    print(f"📄 Jumlah Chapter: {len(chapter_links)}")
+
+    for i, title in enumerate(chapter_titles, 1):
+        print(f"{i}. {title}")
+
+    choice = input("\nKetik 'all' untuk download semua, atau masukkan nomor chapter (misal: 1,3,5): ").strip().lower()
+    if choice == 'all':
+        selected_indices = list(range(len(chapter_links)))
+    else:
+        selected_indices = []
+        try:
+            selected_numbers = [int(i.strip()) for i in choice.split(',') if i.strip().isdigit()]
+            selected_indices = [i - 1 for i in selected_numbers if 0 < i <= len(chapter_links)]
+        except:
+            print("⚠️ Input tidak valid. Keluar.")
+            return
 
     base_path = os.path.join("download", sanitize_filename(series_title))
     original_dir = os.path.join(base_path, "original")
@@ -95,24 +110,26 @@ def main():
     os.makedirs(original_dir, exist_ok=True)
     os.makedirs(translated_dir, exist_ok=True)
 
-    for idx, chapter_link in enumerate(chapters, 1):
-        print(f"[{idx}/{len(chapters)}] Scraping {chapter_link}")
+    print(f"\n🔎 Memulai download {len(selected_indices)} chapter...\n")
+    for count, idx in enumerate(selected_indices, 1):
+        chapter_link = chapter_links[idx]
+        print(f"[{count}/{len(selected_indices)}] Scraping: {chapter_titles[idx]} - {chapter_link}")
         try:
             chapter_title, html_content, text_content = scrape_chapter(chapter_link)
-
             safe_title = sanitize_filename(chapter_title)
-            # Simpan file asli
+
             save_file(os.path.join(original_dir, f"{safe_title}.html"), html_content)
             save_file(os.path.join(original_dir, f"{safe_title}.txt"), text_content)
 
-            # Translate teks panjang dengan batch, lalu simpan
             translated_text = translate_long_text(text_content)
             save_file(os.path.join(translated_dir, f"{safe_title}.txt"), translated_text)
 
+            print(f"✅ Selesai: {chapter_title}")
             time.sleep(1.5)
-
         except Exception as e:
             print(f"❌ Gagal memproses {chapter_link}: {e}")
+
+    print("\n✅ Semua proses selesai.")
 
 if __name__ == "__main__":
     main()

@@ -25,7 +25,6 @@ driver = webdriver.Edge(
 )
 
 def sanitize_filename(text):
-    """Bersihkan nama file/folder dari karakter ilegal"""
     return "".join(c for c in text if c.isalnum() or c in "._- ").strip()
 
 def translate_text(text, dest_lang="id", max_chunk=4000):
@@ -45,7 +44,7 @@ def translate_text(text, dest_lang="id", max_chunk=4000):
         return None
 
 try:
-    series_url = "https://requiemtls.com/series/after-25-years-of-reincarnation-the-adventurer-became-an-academy-instructor/"  # Ganti dengan URL series lain jika perlu
+    series_url = input("Masukan Link Series-nya (contoh: https://requiemtls.com/series/{title}): ")
     driver.get(series_url)
     wait = WebDriverWait(driver, 15)
 
@@ -56,13 +55,13 @@ try:
     except:
         series_title = "Unknown_Series"
 
-    # Buat folder utama dan folder translated
+    # Buat folder
     base_folder = os.path.join("download", series_title)
     base_folder_translated = os.path.join(base_folder, "translated")
     os.makedirs(base_folder, exist_ok=True)
     os.makedirs(base_folder_translated, exist_ok=True)
 
-    # Accept cookies jika muncul
+    # Accept cookies jika ada
     try:
         accept_btn = wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, ".cmplz-buttons .cmplz-btn.cmplz-accept")))
         accept_btn.click()
@@ -74,7 +73,24 @@ try:
     # Ambil semua link episode
     episode_links = wait.until(EC.presence_of_all_elements_located((By.CSS_SELECTOR, ".eplister ul li a")))
     episode_urls = [link.get_attribute("href") for link in episode_links][::-1]
-    print(f"🔎 Menemukan {len(episode_urls)} episode.")
+
+    print("\n📚 Daftar Episode:")
+    for i, url in enumerate(episode_urls, 1):
+        print(f"{i}. {url.split('/')[-2]}")
+
+    choice = input("\nKetik 'all' untuk download semua, atau masukkan nomor episode (misal: 1,3,5): ")
+
+    if choice.strip().lower() != "all":
+        try:
+            selected_indexes = [int(i.strip()) for i in choice.split(',') if i.strip().isdigit()]
+            episode_urls = [episode_urls[i - 1] for i in selected_indexes if 0 < i <= len(episode_urls)]
+            print(f"\n🔎 Akan memproses {len(episode_urls)} episode pilihan: {selected_indexes}")
+        except Exception as e:
+            print(f"❌ Input tidak valid: {e}")
+            driver.quit()
+            exit()
+    else:
+        print(f"\n🔎 Akan memproses semua {len(episode_urls)} episode.")
 
     for idx, episode_url in enumerate(episode_urls, 1):
         print(f"\n▶️ Memproses Episode {idx}: {episode_url}")
@@ -108,7 +124,6 @@ try:
         driver.set_window_size(total_width + 100, total_height + 300)
         time.sleep(1)
 
-        # Simpan screenshot
         screenshot_path = os.path.join(base_folder, f"{episode_title}.png")
         driver.save_screenshot(screenshot_path)
 
@@ -117,13 +132,11 @@ try:
             img = Image.open(screenshot_path)
             text = pytesseract.image_to_string(img, lang='eng')
 
-            # Simpan teks hasil OCR (bahasa Inggris)
             text_path = os.path.join(base_folder, f"{episode_title}.txt")
             with open(text_path, 'w', encoding='utf-8') as f:
                 f.write(text)
             print(f"✅ OCR disimpan: {text_path}")
 
-            # Terjemahkan ke Bahasa Indonesia
             print(f"🌐 Menerjemahkan Episode {idx} ke Bahasa Indonesia...")
             translated_text = translate_text(text, dest_lang="id")
 
