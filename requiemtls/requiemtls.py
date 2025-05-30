@@ -28,7 +28,6 @@ def sanitize_filename(text):
     """Bersihkan nama file/folder dari karakter ilegal"""
     return "".join(c for c in text if c.isalnum() or c in "._- ").strip()
 
-    
 def translate_text(text, dest_lang="id", max_chunk=4000):
     try:
         translator = GoogleTranslator(source='auto', target=dest_lang)
@@ -45,22 +44,23 @@ def translate_text(text, dest_lang="id", max_chunk=4000):
         print(f"⚠️ Gagal translate: {e}")
         return None
 
-
 try:
-    series_url = "https://requiemtls.com/series/the-step-mother-raised-snow-white/" #ganti link nya
+    series_url = "https://requiemtls.com/series/after-25-years-of-reincarnation-the-adventurer-became-an-academy-instructor/"  # Ganti dengan URL series lain jika perlu
     driver.get(series_url)
     wait = WebDriverWait(driver, 15)
 
-    # Ambil judul series untuk folder
+    # Ambil judul series
     try:
         series_title_el = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, "h1.entry-title")))
         series_title = sanitize_filename(series_title_el.text)
     except:
         series_title = "Unknown_Series"
 
+    # Buat folder utama dan folder translated
     base_folder = os.path.join("download", series_title)
-    base_folder_translated = os.path.join("translated", series_title)
+    base_folder_translated = os.path.join(base_folder, "translated")
     os.makedirs(base_folder, exist_ok=True)
+    os.makedirs(base_folder_translated, exist_ok=True)
 
     # Accept cookies jika muncul
     try:
@@ -117,13 +117,13 @@ try:
             img = Image.open(screenshot_path)
             text = pytesseract.image_to_string(img, lang='eng')
 
-            # Simpan teks hasil OCR (Inggris)
+            # Simpan teks hasil OCR (bahasa Inggris)
             text_path = os.path.join(base_folder, f"{episode_title}.txt")
             with open(text_path, 'w', encoding='utf-8') as f:
                 f.write(text)
             print(f"✅ OCR disimpan: {text_path}")
 
-            # Terjemahkan ke Indonesia
+            # Terjemahkan ke Bahasa Indonesia
             print(f"🌐 Menerjemahkan Episode {idx} ke Bahasa Indonesia...")
             translated_text = translate_text(text, dest_lang="id")
 
