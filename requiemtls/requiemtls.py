@@ -10,10 +10,10 @@ import os
 import pytesseract
 from deep_translator import GoogleTranslator
 
-# Set path Tesseract di PC kamu
+# Set path Tesseract
 pytesseract.pytesseract.tesseract_cmd = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
 
-# Setup Edge webdriver dengan opsi headless
+# Setup WebDriver
 options = webdriver.EdgeOptions()
 options.add_argument("--headless")
 options.add_argument("--disable-gpu")
@@ -32,45 +32,42 @@ def translate_text(text, dest_lang="id", max_chunk=4000):
         translator = GoogleTranslator(source='auto', target=dest_lang)
         translated_parts = []
         start = 0
-        length = len(text)
-        while start < length:
+        while start < len(text):
             chunk = text[start:start+max_chunk]
-            translated_chunk = translator.translate(chunk)
-            translated_parts.append(translated_chunk)
+            translated_parts.append(translator.translate(chunk))
             start += max_chunk
         return "\n".join(translated_parts)
     except Exception as e:
-        print(f"⚠️ Gagal translate: {e}")
-        return None
+        return f"⚠️ ERROR_TRANSLATE: {e}"
+
+def log_failure(path, episode_title, episode_url, error_message):
+    with open(path, 'a', encoding='utf-8') as f:
+        f.write(f"{episode_title} | {episode_url} | {error_message}\n")
 
 try:
     series_url = input("Masukan Link Series-nya (contoh: https://requiemtls.com/series/{title}): ")
     driver.get(series_url)
     wait = WebDriverWait(driver, 15)
 
-    # Ambil judul series
     try:
         series_title_el = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, "h1.entry-title")))
         series_title = sanitize_filename(series_title_el.text)
     except:
         series_title = "Unknown_Series"
 
-    # Buat folder
     base_folder = os.path.join("download", series_title)
     base_folder_translated = os.path.join(base_folder, "translated")
+    log_path = os.path.join(base_folder, "failed.log")
     os.makedirs(base_folder, exist_ok=True)
     os.makedirs(base_folder_translated, exist_ok=True)
 
-    # Accept cookies jika ada
     try:
         accept_btn = wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, ".cmplz-buttons .cmplz-btn.cmplz-accept")))
         accept_btn.click()
-        print("✅ Cookie accepted.")
         time.sleep(2)
     except:
-        print("ℹ️ No cookie banner found.")
+        pass
 
-    # Ambil semua link episode
     episode_links = wait.until(EC.presence_of_all_elements_located((By.CSS_SELECTOR, ".eplister ul li a")))
     episode_urls = [link.get_attribute("href") for link in episode_links][::-1]
 
@@ -84,13 +81,10 @@ try:
         try:
             selected_indexes = [int(i.strip()) for i in choice.split(',') if i.strip().isdigit()]
             episode_urls = [episode_urls[i - 1] for i in selected_indexes if 0 < i <= len(episode_urls)]
-            print(f"\n🔎 Akan memproses {len(episode_urls)} episode pilihan: {selected_indexes}")
         except Exception as e:
             print(f"❌ Input tidak valid: {e}")
             driver.quit()
             exit()
-    else:
-        print(f"\n🔎 Akan memproses semua {len(episode_urls)} episode.")
 
     for idx, episode_url in enumerate(episode_urls, 1):
         print(f"\n▶️ Memproses Episode {idx}: {episode_url}")
@@ -113,7 +107,9 @@ try:
                 EC.presence_of_element_located((By.CSS_SELECTOR, "div.epcontent.entry-content"))
             )
         except:
-            print(f"❌ Episode {idx} gagal: konten tidak ditemukan.")
+            error_msg = "Konten tidak ditemukan"
+            print(f"❌ Episode {idx} gagal: {error_msg}")
+            log_failure(log_path, episode_title, episode_url, error_msg)
             continue
 
         driver.execute_script("arguments[0].scrollIntoView();", content)
@@ -136,21 +132,24 @@ try:
             with open(text_path, 'w', encoding='utf-8') as f:
                 f.write(text)
             print(f"✅ OCR disimpan: {text_path}")
-
-            print(f"🌐 Menerjemahkan Episode {idx} ke Bahasa Indonesia...")
-            translated_text = translate_text(text, dest_lang="id")
-
-            if translated_text:
-                translated_path = os.path.join(base_folder_translated, f"{episode_title}.translated.txt")
-                with open(translated_path, 'w', encoding='utf-8') as f:
-                    f.write(translated_text)
-                print(f"✅ Terjemahan disimpan: {translated_path}")
-            else:
-                print("⚠️ Terjemahan gagal atau kosong.")
-
         except Exception as e:
-            print(f"⚠️ Gagal OCR atau terjemahan Episode {idx}: {e}")
+            error_msg = f"OCR gagal: {e}"
+            print(f"❌ {error_msg}")
+            log_failure(log_path, episode_title, episode_url, error_msg)
+            continue
+
+        print(f"🌐 Menerjemahkan Episode {idx} ke Bahasa Indonesia...")
+        translated_text = translate_text(text)
+        if translated_text and not translated_text.startswith("⚠️ ERROR_TRANSLATE"):
+            translated_path = os.path.join(base_folder_translated, f"{episode_title}.translated.txt")
+            with open(translated_path, 'w', encoding='utf-8') as f:
+                f.write(translated_text)
+            print(f"✅ Terjemahan disimpan: {translated_path}")
+        else:
+            error_msg = "Terjemahan gagal atau kosong"
+            print(f"⚠️ {error_msg}")
+            log_failure(log_path, episode_title, episode_url, error_msg)
 
 finally:
     driver.quit()
-    print("\n✅ Semua proses selesai.")
+    print("\n✅ Semua proses selesai. Log kegagalan (jika ada) tersimpan di 'failed.log'")

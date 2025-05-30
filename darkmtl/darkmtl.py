@@ -84,6 +84,10 @@ def translate_long_text(text, target_lang='id', batch_size=4500):
 
     return "\n".join(translated_parts)
 
+def log_failure(log_path, message):
+    with open(log_path, 'a', encoding='utf-8') as log_file:
+        log_file.write(message + '\n')
+
 def main():
     series_title, chapter_links, chapter_titles = get_series_info_and_chapters(BASE_URL)
     print(f"\n📘 Judul Series: {series_title}")
@@ -107,13 +111,16 @@ def main():
     base_path = os.path.join("download", sanitize_filename(series_title))
     original_dir = os.path.join(base_path, "original")
     translated_dir = os.path.join(base_path, "translated")
+    log_path = os.path.join(base_path, "failed.log")
+
     os.makedirs(original_dir, exist_ok=True)
     os.makedirs(translated_dir, exist_ok=True)
 
     print(f"\n🔎 Memulai download {len(selected_indices)} chapter...\n")
     for count, idx in enumerate(selected_indices, 1):
         chapter_link = chapter_links[idx]
-        print(f"[{count}/{len(selected_indices)}] Scraping: {chapter_titles[idx]} - {chapter_link}")
+        chapter_name = chapter_titles[idx]
+        print(f"[{count}/{len(selected_indices)}] Scraping: {chapter_name} - {chapter_link}")
         try:
             chapter_title, html_content, text_content = scrape_chapter(chapter_link)
             safe_title = sanitize_filename(chapter_title)
@@ -128,8 +135,9 @@ def main():
             time.sleep(1.5)
         except Exception as e:
             print(f"❌ Gagal memproses {chapter_link}: {e}")
+            log_failure(log_path, f"{chapter_name} | {chapter_link} | Error: {str(e)}")
 
-    print("\n✅ Semua proses selesai.")
+    print(f"\n✅ Semua proses selesai. Log error tersimpan di: {log_path}")
 
 if __name__ == "__main__":
     main()
